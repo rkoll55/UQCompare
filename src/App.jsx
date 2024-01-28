@@ -1,17 +1,14 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Header from './components/shared/header.jsx'
+import { useState } from "react";
+import Header from "./components/Header.jsx";
+import Poster from "./components/Poster.jsx";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
     <>
-    <Header/>
+      <Header />
+      <Poster />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
