@@ -48,7 +48,7 @@
   position: absolute;
   z-index: -1;
   left: 55rem;
-  height: 33.5rem;
+  height: 180vh;
   width: 30rem;
   background: linear-gradient(to right, #5B247C, #832887);
 }
