@@ -15,7 +15,7 @@ async fn handle_request(_req: Request<Body>) -> Result<Response<Body>, Infallibl
 async fn main() {
     let make_svc = make_service_fn(|_conn| {
         let service = service_fn(handle_request);
-        async { Ok::<_, Infallible>(service) }
+        async move { Ok::<_, Infallible>(service) }
     });
 
     let addr = ([127, 0, 0, 1], 8080).into();

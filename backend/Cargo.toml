@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 actix-web = "4.0.0-beta.8"
 actix-rt = "2.2.0"
-hyper = "0.13"
+hyper = { version = "0.14", features = ["full"] }
 tokio = { version = "1", features = ["full"] }
