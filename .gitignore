@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 # Rust files
-Cargo.lock
+/backend/Cargo.lock
 backend/target/
 *.rlib
 *.rmeta
