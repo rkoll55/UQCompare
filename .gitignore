@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust files
+Cargo.lock
+backend/target/
+*.rlib
+*.rmeta
