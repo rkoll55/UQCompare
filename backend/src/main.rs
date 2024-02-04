@@ -1,27 +1,28 @@
-use hyper::service::{make_service_fn, service_fn};
-use hyper::{Body, Request, Response, Server};
-use std::convert::Infallible;
+mod api;
+mod repository;
+mod model;
 
-async fn handle_request(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    let response = Response::builder()
-        .status(200)
-        .body(Body::from("Hello, World!"))
-        .unwrap();
+use api::task::get_task;
 
-    Ok(response)
-}
+use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use repository::ddb::DDBRepository;
 
-#[tokio::main]
-async fn main() {
-    let make_svc = make_service_fn(|_conn| {
-        let service = service_fn(handle_request);
-        async move { Ok::<_, Infallible>(service) }
-    });
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "DEBUG");
+    std::env::set_var("RUST_BACKTRACE", "1");
+    env_logger::init();
 
-    let addr = ([127, 0, 0, 1], 8080).into();
-    let server = Server::bind(&addr).serve(make_svc);
+    let config = aws_config::load_from_env().await;
 
-    if let Err(e) = server.await {
-        eprintln!("Server error: {}", e);
-    }
+    HttpServer::new(move || {
+        let ddb_repo: DDBRepository = DDBRepository::init(String::from("task"), config.clone());
+        let ddb_data = Data::new(ddb_repo);
+
+        let logger = Logger::default();
+        App::new().wrap(logger).app_data(ddb_data).service(get_task)
+    })
+    .bind(("127.0.0.1", 8000))?
+    .run()
+    .await
 }
