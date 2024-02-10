@@ -3,7 +3,7 @@ mod model;
 mod repository;
 
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
-use api::task::{get_top_coruses};
+use api::course::get_course;
 use repository::ddb::DDBRepository;
 
 #[actix_web::main]
@@ -20,7 +20,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(logger)
             .app_data(ddb_data)
-            .service(get_top_coruses)
+            .service(get_course)
     })
     .bind(("127.0.0.1", 8000))?
     .run()
