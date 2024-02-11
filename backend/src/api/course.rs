@@ -79,14 +79,26 @@ pub async fn get_all_courses(
     }
 }
 
+#[get("/courses/top/{num_courses}")]
+pub async fn get_top_courses(
+    ddb_repo: Data<DDBRepository>,
+    num_courses: Path<i32>,
+) -> Result<Json<Vec<Course>>, CourseError> {
+
+    let courses = ddb_repo.get_top_courses(num_courses.into_inner()).await;
+    match courses {
+        Ok(course_list) => Ok(Json(course_list)),
+        _ => {
+            Err(CourseError::CourseNotFound)
+        },
+    }
+}
+
 #[post("/courses/create")]
 async fn create_course(
     ddb_repo: Data<DDBRepository>,
     new_course: Json<Course>,
 ) -> impl Responder {
-
-    error!("{:?}", new_course);
-    error!("error errror error");
 
     let course = Course {
         course_id: new_course.course_id.clone(),

@@ -260,4 +260,48 @@ impl DDBRepository {
             }
         }
     }
+
+    pub async fn get_top_courses(&self, num_courses: i32) -> Result<Vec<Course>, DDBError> {
+        let category_info = AttributeValue::S(String::from("INFO"));
+
+        // I couldn't figure out how to get a specified number from the DB lmao
+        let response = self
+            .client
+            .scan()
+            .table_name(&self.table_name)
+            .filter_expression("category = :category")
+            .expression_attribute_values(":category", category_info)
+            .send()
+            .await;
+
+        let mut courses = Vec::new();
+
+        match response {
+            Ok(response) => {
+                match response.items {
+                    Some(items) => {
+                        let mut count = 0;
+                        for item in items {
+                            match item_to_course(&item) {
+                                Ok(task) => {
+                                    if (count >= num_courses) {
+                                        break;
+                                    }
+                                    courses.push(task);
+                                    count += 1;
+                                }
+                                Err(_) => break,
+                            }
+                        }
+                    }
+                    None => return Ok(courses),
+                }
+                Ok(courses)
+            }
+            Err(err) => {
+                error!("{:?}", err);
+                Err(DDBError::General("Could not access DB".to_string()))
+            }
+        }
+    }
 }

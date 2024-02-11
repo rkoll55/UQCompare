@@ -3,7 +3,7 @@ mod model;
 mod repository;
 
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
-use api::course::{get_all_courses, get_course, create_course};
+use api::course::{get_all_courses, get_course, create_course, get_top_courses};
 use repository::ddb::DDBRepository;
 
 
@@ -25,7 +25,8 @@ async fn main() -> std::io::Result<()> {
             .service(get_course)
             .service(get_all_courses)
             .service(create_course)
-    })
+            .service(get_top_courses)
+        })
     .bind(("127.0.0.1", 8000))?
     .run()
     .await
