@@ -11,10 +11,8 @@ use actix_web::{
     HttpResponse,
     Responder
 };
-use log::error;
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde::{Deserialize};
 use serde_json::Error as SerdeJsonError;
 
 #[derive(Debug, Display)]
@@ -53,7 +51,6 @@ impl From<SerdeJsonError> for CourseError {
     }
 }
 
-#[get("/courses/get/{course_code}")]
 pub async fn get_course(
     ddb_repo: Data<DDBRepository>,
     course_code: Path<String>,
@@ -65,7 +62,6 @@ pub async fn get_course(
     }
 }
 
-#[get("/courses/getall")]
 pub async fn get_all_courses(
     ddb_repo: Data<DDBRepository>,
 ) -> Result<Json<Vec<Course>>, CourseError> {
@@ -79,7 +75,6 @@ pub async fn get_all_courses(
     }
 }
 
-#[get("/courses/top/{num_courses}")]
 pub async fn get_top_courses(
     ddb_repo: Data<DDBRepository>,
     num_courses: Path<i32>,
@@ -94,8 +89,7 @@ pub async fn get_top_courses(
     }
 }
 
-#[post("/courses/create")]
-async fn create_course(
+pub async fn create_course(
     ddb_repo: Data<DDBRepository>,
     new_course: Json<Course>,
 ) -> impl Responder {
