@@ -12,6 +12,7 @@ pub struct DDBRepository {
     table_name: String,
 }
 
+
 #[derive(Debug)]
 pub enum DDBError {
     MissingAttribute(String),
@@ -73,6 +74,7 @@ fn item_value(
 }
 
 fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBError> {
+
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
     let course_name = required_item_value("name", item)?;
@@ -178,7 +180,10 @@ impl DDBRepository {
                 AttributeValue::S(String::from(course.course_id)),
             )
             .item("category", AttributeValue::S(String::from(course.category)))
-            .item("name", AttributeValue::S(String::from(course.course_name)))
+            .item(
+                "course_name",
+                AttributeValue::S(String::from(course.course_name)),
+            )
             .item(
                 "description",
                 AttributeValue::S(String::from(course.description)),
