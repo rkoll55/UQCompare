@@ -1,5 +1,5 @@
 use actix_web::web;
-use super::course::{ get_course, get_all_courses, create_course };
+use super::requests::{ get_course, get_all_courses, create_course };
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(

@@ -6,7 +6,6 @@ use log::error;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
-use std::str::FromStr;
 
 pub struct DDBRepository {
     client: Client,
@@ -116,7 +115,7 @@ fn item_to_review(item: &HashMap<String, AttributeValue>) -> Result<Review, DDBE
     let rating_str = required_item_value("rating", item)?;
     let rating = rating_str
         .parse::<u8>()
-        .map_err(|_| DDBError::General(("Item to review".to_string())))?;
+        .map_err(|_| DDBError::General("Item to review".to_string()))?;
     let text = required_item_value("text", item)?;
     let date = required_item_value("date", item)?;
 

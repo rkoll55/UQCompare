@@ -2,51 +2,43 @@ use crate::model::models::Course;
 use crate::repository::ddb::DDBRepository;
 use actix_web::{
     error::ResponseError,
-    get,
-    http::{header::ContentType, StatusCode},
-    post,
+    http::header::ContentType,
     web::Data,
     web::Json,
     web::Path,
     HttpResponse,
-    Responder
+
 };
 use derive_more::Display;
-use serde::{Deserialize};
-use serde_json::Error as SerdeJsonError;
+use serde_json::{json, Error as SerdeJsonError};
 
 #[derive(Debug, Display)]
 pub enum CourseError {
     CourseNotFound,
     CourseUpdateFailure,
-    CourseCreationFailure,
+    CourseCreationFailure(String),
     BadCourseRequest,
-}
-
-#[derive(Deserialize)]
-pub struct CourseCode {
-    course_id: String,
 }
 
 impl ResponseError for CourseError {
     fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code())
-            .insert_header(ContentType::json())
-            .body(self.to_string())
-    }
-
-    fn status_code(&self) -> StatusCode {
         match self {
-            CourseError::CourseNotFound => StatusCode::NOT_FOUND,
-            CourseError::CourseUpdateFailure => StatusCode::FAILED_DEPENDENCY,
-            CourseError::CourseCreationFailure => StatusCode::FAILED_DEPENDENCY,
-            CourseError::BadCourseRequest => StatusCode::BAD_REQUEST,
+            CourseError::CourseNotFound | CourseError::CourseUpdateFailure | CourseError::BadCourseRequest => HttpResponse::build(self.status_code())
+                .insert_header(ContentType::json())
+                .body(self.to_string()),
+
+            CourseError::CourseCreationFailure(msg) => HttpResponse::build(self.status_code())
+                .insert_header(ContentType::json())
+                .json(&json!({
+                    "error": self.to_string(),
+                    "message": msg,
+                })),
         }
     }
 }
 
 impl From<SerdeJsonError> for CourseError {
-    fn from(err: SerdeJsonError) -> Self {
+    fn from(_err: SerdeJsonError) -> Self {
         CourseError::CourseNotFound
     }
 }
@@ -92,7 +84,7 @@ pub async fn get_top_courses(
 pub async fn create_course(
     ddb_repo: Data<DDBRepository>,
     new_course: Json<Course>,
-) -> impl Responder {
+) -> Result<HttpResponse, CourseError> {
 
     let course = Course {
         course_id: new_course.course_id.clone(),
@@ -104,7 +96,7 @@ pub async fn create_course(
     };
 
     match ddb_repo.put_course(course).await {
-        Ok(_) => HttpResponse::Ok().body("Course added successfully."),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Failed to add course: {}", e)),
+        Ok(_) => Ok(HttpResponse::Ok().body("Course added successfully.")),
+        Err(e) => Err(CourseError::CourseCreationFailure(format!("Failed to add course: {}", e))),
     }
 }
