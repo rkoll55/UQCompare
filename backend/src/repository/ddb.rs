@@ -74,7 +74,6 @@ fn item_value(
 }
 
 fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBError> {
-
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
     let course_name = required_item_value("name", item)?;
@@ -85,7 +84,6 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let prerequisites_av = item
         .get("prerequisites")
         .ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
-
 
     let prerequisites_list = match prerequisites_av {
         AttributeValue::L(list) => list
@@ -172,7 +170,7 @@ impl DDBRepository {
             .map(|prerequisite| AttributeValue::S(prerequisite))
             .collect::<Vec<_>>();
 
-        let mut request = self
+        let request = self
             .client
             .put_item()
             .table_name(&self.table_name)
@@ -181,10 +179,7 @@ impl DDBRepository {
                 AttributeValue::S(String::from(course.course_id)),
             )
             .item("category", AttributeValue::S(String::from(course.category)))
-            .item(
-                "course_name",
-                AttributeValue::S(String::from(course.course_name)),
-            )
+            .item("name", AttributeValue::S(String::from(course.course_name)))
             .item(
                 "description",
                 AttributeValue::S(String::from(course.description)),
@@ -232,19 +227,17 @@ impl DDBRepository {
 
     pub async fn get_all_courses(&self) -> Result<Vec<Course>, DDBError> {
         let category_info = AttributeValue::S(String::from("INFO"));
-        
+
         let response = self
-        .client
-        .scan()
-        .table_name(&self.table_name)
-        .filter_expression("category = :category")
-        .expression_attribute_values(":category", category_info)
-        .send()
-        .await;
+            .client
+            .scan()
+            .table_name(&self.table_name)
+            .filter_expression("category = :category")
+            .expression_attribute_values(":category", category_info)
+            .send()
+            .await;
 
         let mut courses = Vec::new();
-    
-        error!(" {:?}", &response);
 
         match response {
             Ok(response) => {

@@ -4,11 +4,12 @@ use actix_web::{
     error::ResponseError,
     get,
     http::{header::ContentType, StatusCode},
-    post, put,
+    post,
     web::Data,
     web::Json,
     web::Path,
     HttpResponse,
+    Responder
 };
 use log::error;
 use derive_more::Display;
@@ -73,8 +74,31 @@ pub async fn get_all_courses(
     match courses {
         Ok(course_list) => Ok(Json(course_list)),
         _ => {
-            println!("Error Error Error");
             Err(CourseError::CourseNotFound)
         },
+    }
+}
+
+#[post("/courses/create")]
+async fn create_course(
+    ddb_repo: Data<DDBRepository>,
+    new_course: Json<Course>,
+) -> impl Responder {
+
+    error!("{:?}", new_course);
+    error!("error errror error");
+
+    let course = Course {
+        course_id: new_course.course_id.clone(),
+        category: new_course.category.clone(),
+        course_name: new_course.course_name.clone(),
+        description: new_course.description.clone(),
+        lecturer: new_course.lecturer.clone(),
+        prerequisites: new_course.prerequisites.clone(),
+    };
+
+    match ddb_repo.put_course(course).await {
+        Ok(_) => HttpResponse::Ok().body("Course added successfully."),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Failed to add course: {}", e)),
     }
 }
