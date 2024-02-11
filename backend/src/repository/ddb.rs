@@ -1,17 +1,18 @@
-use aws_sdk_dynamodb::Client;
-use aws_sdk_dynamodb::model::AttributeValue;
+use crate::model::models::{Answer, Course, Question, Review};
 use aws_config::Config;
-use crate::model::models::{ Course, Review, Question, Answer };
+use aws_sdk_dynamodb::model::AttributeValue;
+use aws_sdk_dynamodb::Client;
 use log::error;
-use std::str::FromStr;
-use std::fmt;
-use std::error::Error;
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
+use std::str::FromStr;
 
 pub struct DDBRepository {
     client: Client,
-    table_name: String
+    table_name: String,
 }
+
 #[derive(Debug)]
 pub enum DDBError {
     MissingAttribute(String),
@@ -32,8 +33,12 @@ impl fmt::Display for DDBError {
 impl Error for DDBError {
     fn description(&self) -> &str {
         match *self {
-            DDBError::MissingAttribute(_) => "An expected attribute is missing from the DynamoDB item",
-            DDBError::UnexpectedType(_) => "An attribute in the DynamoDB item has an unexpected type",
+            DDBError::MissingAttribute(_) => {
+                "An expected attribute is missing from the DynamoDB item"
+            }
+            DDBError::UnexpectedType(_) => {
+                "An attribute in the DynamoDB item has an unexpected type"
+            }
             DDBError::General(_) => "A general error occurred in processing the DynamoDB item",
         }
     }
@@ -44,41 +49,57 @@ impl Error for DDBError {
     }
 }
 
-fn required_item_value(key: &str, item: &HashMap<String, AttributeValue>) -> Result<String, DDBError> {
+fn required_item_value(
+    key: &str,
+    item: &HashMap<String, AttributeValue>,
+) -> Result<String, DDBError> {
     match item_value(key, item) {
         Ok(Some(value)) => Ok(value),
-        Ok(None) => Err(DDBError::General(("required item value".to_string()))),
-        Err(DDBError) => Err(DDBError)
+        Ok(None) => Err(DDBError::General("required item value".to_string())),
+        Err(DDBError) => Err(DDBError),
     }
 }
 
-fn item_value(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Option<String>, DDBError> {
+fn item_value(
+    key: &str,
+    item: &HashMap<String, AttributeValue>,
+) -> Result<Option<String>, DDBError> {
     match item.get(key) {
         Some(value) => match value.as_s() {
             Ok(val) => Ok(Some(val.clone())),
-            Err(_) => Err(DDBError::General(("Item".to_string())))
+            Err(_) => Err(DDBError::General("Item".to_string())),
         },
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
 fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBError> {
+
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
-    let course_name = required_item_value("course_name", item)?;
+    let course_name = required_item_value("name", item)?;
     let description = required_item_value("description", item)?;
     let lecturer = required_item_value("lecturer", item)?;
 
     // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
-    let prerequisites_av = item.get("prerequisites").ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
+    let prerequisites_av = item
+        .get("prerequisites")
+        .ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
+
+
     let prerequisites_list = match prerequisites_av {
-        AttributeValue::L(list) => list.iter().map(|av| {
-            match av {
+        AttributeValue::L(list) => list
+            .iter()
+            .map(|av| match av {
                 AttributeValue::S(s) => Ok(s.clone()),
-                _ => Err(DDBError::UnexpectedType("Expected string in prerequisites list".to_string())),
-            }
-        }).collect::<Result<Vec<String>, DDBError>>(),
-        _ => Err(DDBError::UnexpectedType("Expected list for prerequisites".to_string())),
+                _ => Err(DDBError::UnexpectedType(
+                    "Expected string in prerequisites list".to_string(),
+                )),
+            })
+            .collect::<Result<Vec<String>, DDBError>>(),
+        _ => Err(DDBError::UnexpectedType(
+            "Expected list for prerequisites".to_string(),
+        )),
     }?;
 
     Ok(Course {
@@ -91,12 +112,13 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     })
 }
 
-
 fn item_to_review(item: &HashMap<String, AttributeValue>) -> Result<Review, DDBError> {
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
     let rating_str = required_item_value("rating", item)?;
-    let rating = rating_str.parse::<u8>().map_err(|_| DDBError::General(("Item to review".to_string())))?;
+    let rating = rating_str
+        .parse::<u8>()
+        .map_err(|_| DDBError::General(("Item to review".to_string())))?;
     let text = required_item_value("text", item)?;
     let date = required_item_value("date", item)?;
 
@@ -140,37 +162,48 @@ fn item_to_answer(item: &HashMap<String, AttributeValue>) -> Result<Answer, DDBE
 impl DDBRepository {
     pub fn init(table_name: String, config: Config) -> DDBRepository {
         let client = Client::new(&config);
-        DDBRepository {
-            table_name,
-            client
-        }
+        DDBRepository { table_name, client }
     }
 
     pub async fn put_course(&self, course: Course) -> Result<(), DDBError> {
-        let prerequisites_av = course.prerequisites.into_iter().map(|prerequisite| {
-            AttributeValue::S(prerequisite)
-        }).collect::<Vec<_>>();
+        let prerequisites_av = course
+            .prerequisites
+            .into_iter()
+            .map(|prerequisite| AttributeValue::S(prerequisite))
+            .collect::<Vec<_>>();
 
-        let mut request = self.client.put_item()
+        let mut request = self
+            .client
+            .put_item()
             .table_name(&self.table_name)
-            .item("course_id", AttributeValue::S(String::from(course.course_id)))
+            .item(
+                "course_id",
+                AttributeValue::S(String::from(course.course_id)),
+            )
             .item("category", AttributeValue::S(String::from(course.category)))
-            .item("course_name", AttributeValue::S(String::from(course.course_name)))
-            .item("description", AttributeValue::S(String::from(course.description)))
+            .item(
+                "course_name",
+                AttributeValue::S(String::from(course.course_name)),
+            )
+            .item(
+                "description",
+                AttributeValue::S(String::from(course.description)),
+            )
             .item("lecturer", AttributeValue::S(String::from(course.lecturer)))
             .item("prerequisites", AttributeValue::L(prerequisites_av));
 
         match request.send().await {
             Ok(_) => Ok(()),
-            Err(_) => Err(DDBError::General(("Put error".to_string())))
+            Err(_) => Err(DDBError::General("Put error".to_string())),
         }
     }
 
     pub async fn get_course(&self, course_id: String) -> Option<Course> {
         let course_id_av = AttributeValue::S(course_id);
         let category_info = AttributeValue::S(String::from("INFO"));
-    
-        let res = self.client
+
+        let res = self
+            .client
             .query()
             .table_name(&self.table_name)
             .key_condition_expression("course_id = :course_id AND category = :category")
@@ -179,27 +212,58 @@ impl DDBRepository {
             .send()
             .await;
 
-        println!("DynamoDB Response: {:?}", res);
-    
         return match res {
-            Ok(output) => {
-                match output.items {
-                    Some(items) => {
-                        let item = &items.first()?;
-                        error!("{:?}", &item);
-                        match item_to_course(item) {
-                            Ok(task) => Some(task),
-                            Err(_) => None
-                        }
-                    },
-                    None => {
-                        None
+            Ok(output) => match output.items {
+                Some(items) => {
+                    let item = &items.first()?;
+                    match item_to_course(item) {
+                        Ok(task) => Some(task),
+                        Err(_) => None,
                     }
                 }
+                None => None,
             },
             Err(error) => {
                 error!("{:?}", error);
                 None
+            }
+        };
+    }
+
+    pub async fn get_all_courses(&self) -> Result<Vec<Course>, DDBError> {
+        let category_info = AttributeValue::S(String::from("INFO"));
+        
+        let response = self
+        .client
+        .scan()
+        .table_name(&self.table_name)
+        .filter_expression("category = :category")
+        .expression_attribute_values(":category", category_info)
+        .send()
+        .await;
+
+        let mut courses = Vec::new();
+    
+        error!(" {:?}", &response);
+
+        match response {
+            Ok(response) => {
+                match response.items {
+                    Some(items) => {
+                        for item in items {
+                            match item_to_course(&item) {
+                                Ok(task) => courses.push(task),
+                                Err(_) => break,
+                            }
+                        }
+                    }
+                    None => return Ok(courses),
+                }
+                Ok(courses)
+            }
+            Err(err) => {
+                error!("{:?}", err);
+                Err(DDBError::General("Could not access DB".to_string()))
             }
         }
     }

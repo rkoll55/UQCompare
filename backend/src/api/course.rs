@@ -10,9 +10,11 @@ use actix_web::{
     web::Path,
     HttpResponse,
 };
-
+use log::error;
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use serde_json::Error as SerdeJsonError;
 
 #[derive(Debug, Display)]
 pub enum CourseError {
@@ -44,33 +46,35 @@ impl ResponseError for CourseError {
     }
 }
 
-// #[get("/courses/top_courses")]
-// pub async fn get_top_courses(
-//     ddb_repo: Data<DDBRepository>,
-//     course_name: Path<CourseName>,
-// ) -> Result<Json<Vec<Course>>, CourseError> {
-    
-//     let courses = ddb_repo.get_top_courses(
-//         course_name.into_inner().name).await;
-
-//     match courses {
-//         Ok(courses) => Ok(Json(courses)),
-//         Err(_) => Err(CourseError::CourseNotFound), // Or any other appropriate error
-//     }
-// }
+impl From<SerdeJsonError> for CourseError {
+    fn from(err: SerdeJsonError) -> Self {
+        CourseError::CourseNotFound
+    }
+}
 
 #[get("/courses/get/{course_code}")]
 pub async fn get_course(
     ddb_repo: Data<DDBRepository>,
     course_code: Path<String>,
 ) -> Result<Json<Course>, CourseError> {
-     
-    let course = ddb_repo.get_course(
-        course_code.into_inner()).await;
-
-    println!("Match Response: {:?}", course);
+    let course = ddb_repo.get_course(course_code.into_inner()).await;
     match course {
         Some(course) => Ok(Json(course)),
         None => Err(CourseError::CourseNotFound),
+    }
+}
+
+#[get("/courses/getall")]
+pub async fn get_all_courses(
+    ddb_repo: Data<DDBRepository>,
+) -> Result<Json<Vec<Course>>, CourseError> {
+    println!("Error Error Error");
+    let courses = ddb_repo.get_all_courses().await;
+    match courses {
+        Ok(course_list) => Ok(Json(course_list)),
+        _ => {
+            println!("Error Error Error");
+            Err(CourseError::CourseNotFound)
+        },
     }
 }
