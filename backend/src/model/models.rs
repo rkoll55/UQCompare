@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use std::fmt;
+use core::fmt;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Course {
