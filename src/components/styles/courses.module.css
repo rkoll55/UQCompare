@@ -8,8 +8,8 @@
 }
 
 .coursesHeader {
-  margin-top: 1.5rem;
-  margin-left: 4rem;
+  margin-top: 2rem;
+  margin-left: 8rem;
   margin-right: auto;
   font-size: 2rem;
 }
@@ -28,4 +28,30 @@
 
 .search:focus {
   border: 2px solid #ffa200;
+}
+
+.coursesBlock {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: 3rem;
+}
+
+.courseTile {
+  margin-left: 5rem;
+  margin-right: 5rem;
+  margin-bottom: 3rem;
+  background-color: white;
+  width: 15.2rem;
+  height: 10.35rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  border-radius: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.courseTile:hover,
+.courseTile:active {
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
 }

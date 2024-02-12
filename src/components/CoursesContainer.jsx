@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import Search from "./Search";
 import Styles from "./styles/courses.module.css";
+import CourseTile from "./CourseTile";
 
 function CoursesContainer() {
   const [courses, setCourses] = useState();
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/courses/top/5");
+      const response = await fetch("http://127.0.0.1:8000/courses/top/6");
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -26,11 +27,13 @@ function CoursesContainer() {
     <section className={Styles.courseSection}>
       <Search />
       <h1 className={Styles.coursesHeader}>Featured Courses...</h1>
-      {courses ? (
-        courses.map((course) => <h2>{course.course_id}</h2>)
-      ) : (
-        <h1>Loading...</h1>
-      )}
+      <div className={Styles.coursesBlock}>
+        {courses ? (
+          courses.map((course) => <CourseTile course_information={course} />)
+        ) : (
+          <h1>Loading...</h1>
+        )}
+      </div>
     </section>
   );
 }
