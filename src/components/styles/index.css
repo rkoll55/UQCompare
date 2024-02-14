@@ -1,14 +1,15 @@
 :root {
   font-family: Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  height: 100vh;
 }
 
 ::selection {
-  background: #FFA200;
+  background: #ffa200;
   color: black; /* Optional: Changes the color of the text */
 }
 
 /* For mobile devices */
 ::-moz-selection {
-  background: #FFA200;
+  background: #ffa200;
   color: black; /* Optional: Changes the color of the text */
 }

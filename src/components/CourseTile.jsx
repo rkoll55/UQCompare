@@ -1,14 +1,16 @@
 import Styles from "./styles/courses.module.css";
+import { Link } from "react-router-dom";
 
 function CourseTile({ course_information }) {
-  console.log(course_information);
-
   return (
-    <a className={Styles.courseTile}>
+    <Link
+      className={Styles.courseTile}
+      to={"/courses/" + course_information.course_id.toLowerCase()}
+    >
       <h1>{course_information.course_id}</h1>
       <h3>{course_information.course_name}</h3>
       <p>{course_information.description}</p>
-    </a>
+    </Link>
   );
 }
 
