@@ -4,7 +4,7 @@ import poster from "../assets/poster-image.jpg";
 function Poster() {
   return (
     <>
-            <div className={styles.square} />
+      <div className={styles.square} />
       <section className={styles.poster}>
         <div className={styles.posterHeading}>
           <h1>Engage, Review and Discuss Your UQ Courses</h1>

@@ -1,0 +1,20 @@
+.qna {
+  margin-top: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  margin-bottom: 2rem;
+  background-color: white;
+  padding: 1.5rem;
+  padding-left: 3rem;
+  border-radius: 1rem;
+}
+
+.review {
+  margin-top: 1rem;
+  margin-left: 1rem;
+  margin-right: 1rem;
+  background-color: white;
+  padding: 1.5rem;
+  padding-left: 3rem;
+  border-radius: 1rem;
+}

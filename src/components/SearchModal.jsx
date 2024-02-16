@@ -23,7 +23,7 @@ const styles = {
     justtifyContent: "center",
     borderRadius: "2rem",
     zIndex: 2,
-    border: "4px solid #51247a",
+    border: "4px solid #44619e",
   },
 
   search: {

@@ -26,7 +26,7 @@
 }
 
 .posterHeading h1 {
-  color: #51247a;
+  color: #44619e;
   font-size: 2rem;
   font-family: "Montserrat", Helvetica, Arial, sans-serif;
 }
@@ -37,18 +37,18 @@
 
 .lineBreak {
   width: 20rem;
-  color: #51247a;
-  background: linear-gradient(to right, #51247a, #52247a, #92298a);
+  color: #44619e;
+  background: linear-gradient(to right, #44619e, #44619e, #92298a);
   height: 5px;
   border: none;
   border-radius: 1px;
 }
 
 .square {
-  position: absolute;
+  position: fixed;
   z-index: -1;
   left: 55rem;
-  height: 180vh;
+  height: 92vh;
   width: 30rem;
-  background: linear-gradient(to right, #5B247C, #832887);
+  background: linear-gradient(to right, #44619e, #832887);
 }

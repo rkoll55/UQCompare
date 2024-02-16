@@ -1,0 +1,12 @@
+.errorBody {
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.errorButton {
+  color: white;
+  padding: 1rem;
+  background-color: #44619e;
+  border: none;
+  border-radius: 0.5rem;
+}

@@ -2,12 +2,18 @@ import { SearchProvider } from "./SearchContext.jsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import MainPage from "./pages/MainPage.jsx";
 import RootLayout from "./pages/Root.jsx";
+import ErrorPage from "./pages/ErrorPage.jsx";
+import CoursePage from "./pages/CoursePage.jsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <RootLayout />,
-    children: [{ path: "/", element: <MainPage /> }],
+    errorElement: <ErrorPage />,
+    children: [
+      { path: "/", element: <MainPage /> },
+      { path: "/courses/:courseId", element: <CoursePage /> },
+    ],
   },
 ]);
 

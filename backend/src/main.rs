@@ -5,6 +5,8 @@ mod repository;
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use api::router::routes;
 use repository::ddb::DDBRepository;
+// We need Cors to allow it to be used on port 8000
+use actix_cors::Cors;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -14,14 +16,15 @@ async fn main() -> std::io::Result<()> {
 
     let config = aws_config::load_from_env().await;
     HttpServer::new(move || {
-        let ddb_repo: DDBRepository = DDBRepository::init(String::from("uqcompare_courses"), config.clone());
+        let ddb_repo: DDBRepository =
+            DDBRepository::init(String::from("uqcompare_courses"), config.clone());
         let ddb_data = Data::new(ddb_repo);
         let logger = Logger::default();
         App::new()
             .wrap(logger)
+            .wrap(Cors::permissive())
             .app_data(ddb_data.clone())
             .configure(routes)
-
     })
     .bind(("127.0.0.1", 8000))?
     .run()

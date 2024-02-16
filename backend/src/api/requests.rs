@@ -57,7 +57,6 @@ pub async fn get_course(
 pub async fn get_all_courses(
     ddb_repo: Data<DDBRepository>,
 ) -> Result<Json<Vec<Course>>, CourseError> {
-    println!("Error Error Error");
     let courses = ddb_repo.get_all_courses().await;
     match courses {
         Ok(course_list) => Ok(Json(course_list)),
