@@ -91,6 +91,8 @@ pub async fn create_course(
         course_name: new_course.course_name.clone(),
         description: new_course.description.clone(),
         lecturer: new_course.lecturer.clone(),
+        average_rating: new_course.average_rating.clone(),
+        average_difficulty: new_course.average_difficulty.clone(),
         prerequisites: new_course.prerequisites.clone(),
     };
 

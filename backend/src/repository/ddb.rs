@@ -56,7 +56,7 @@ fn required_item_value(
     match item_value(key, item) {
         Ok(Some(value)) => Ok(value),
         Ok(None) => Err(DDBError::General("required item value".to_string())),
-        Err(DDBError) => Err(DDBError),
+        Err(e) => Err(e),
     }
 }
 
@@ -81,25 +81,13 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let description = required_item_value("description", item)?;
     let lecturer = required_item_value("lecturer", item)?;
 
-    // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
-    let prerequisites_av = item
-        .get("prerequisites")
-        .ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
+    // Extract and parse numerical attributes using a helper function
+    let average_rating = parse_numeric_attribute(item, "average_rating")?;
+    let average_difficulty = parse_numeric_attribute(item, "average_difficulty")?;
 
-    let prerequisites_list = match prerequisites_av {
-        AttributeValue::L(list) => list
-            .iter()
-            .map(|av| match av {
-                AttributeValue::S(s) => Ok(s.clone()),
-                _ => Err(DDBError::UnexpectedType(
-                    "Expected string in prerequisites list".to_string(),
-                )),
-            })
-            .collect::<Result<Vec<String>, DDBError>>(),
-        _ => Err(DDBError::UnexpectedType(
-            "Expected list for prerequisites".to_string(),
-        )),
-    }?;
+    // Extract and process list attributes using a helper function
+    let prerequisites_list = parse_list_attribute(item, "prerequisites")?;
+    
 
     Ok(Course {
         course_id,
@@ -107,8 +95,30 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
         course_name,
         description,
         lecturer,
+        average_rating,
+        average_difficulty,
         prerequisites: prerequisites_list,
     })
+}
+
+// Helper function to parse numeric attributes
+fn parse_numeric_attribute(item: &HashMap<String, AttributeValue>, key: &str) -> Result<u8, DDBError> {
+    item.get(key)
+        .ok_or_else(|| DDBError::MissingAttribute(key.to_string()))
+        .and_then(|av| match av {
+            AttributeValue::N(number_str) => number_str.parse::<u8>().map_err(|_| DDBError::UnexpectedType(format!("Failed to parse {}", key))),
+            _ => Err(DDBError::UnexpectedType(format!("Expected number for {}", key))),
+        })
+}
+
+// Helper function to parse list attributes
+fn parse_list_attribute(item: &HashMap<String, AttributeValue>, key: &str) -> Result<Vec<String>, DDBError> {
+    item.get(key)
+        .ok_or_else(|| DDBError::MissingAttribute(key.to_string()))
+        .and_then(|av| match av {
+            AttributeValue::L(list) => list.iter().map(|av| av.as_s().ok_or_else(|| DDBError::UnexpectedType(format!("Expected string in {} list", key)))).collect(),
+            _ => Err(DDBError::UnexpectedType(format!("Expected list for {}", key))),
+        })
 }
 
 fn item_to_review(item: &HashMap<String, AttributeValue>) -> Result<Review, DDBError> {
@@ -117,7 +127,7 @@ fn item_to_review(item: &HashMap<String, AttributeValue>) -> Result<Review, DDBE
     let rating_str = required_item_value("rating", item)?;
     let rating = rating_str
         .parse::<u8>()
-        .map_err(|_| DDBError::General("Item to review".to_string()))?;
+        .map_err(|_| DDBError::UnexpectedType("Item to review".to_string()))?;
     let text = required_item_value("text", item)?;
     let date = required_item_value("date", item)?;
 

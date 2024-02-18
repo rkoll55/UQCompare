@@ -8,6 +8,8 @@ pub struct Course {
     pub course_name: String,
     pub description: String,
     pub lecturer: String,
+    pub average_rating: u8,
+    pub average_difficulty: u8,
     pub prerequisites: Vec<String>,
 }
 
