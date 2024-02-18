@@ -206,6 +206,7 @@ impl DDBRepository {
             .send()
             .await;
 
+            error!("{:?}",res);
         return match res {
             Ok(output) => match output.items {
                 Some(items) => {
@@ -218,7 +219,7 @@ impl DDBRepository {
                 None => None,
             },
             Err(error) => {
-                error!("{:?}", error);
+              //  error!("{:?}", error);
                 None
             }
         };
