@@ -34,7 +34,13 @@ pub struct Review {
     pub category: String,
     pub rating: u8,
     pub text: String,
-    pub date: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ReviewRequest {
+    pub course_id: String,
+    pub rating: u8,
+    pub text: String,
 }
 
 #[derive(Serialize, Deserialize)]
