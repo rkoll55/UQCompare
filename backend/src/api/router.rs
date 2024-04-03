@@ -1,4 +1,4 @@
-use super::requests::{create_course, get_all_courses, get_course, get_top_courses};
+use super::requests::{create_course, create_review, get_all_courses, get_course, get_reviews, get_top_courses};
 use actix_web::web;
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
@@ -7,6 +7,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .route("/get/{course_code}", web::get().to(get_course))
             .route("/getall", web::get().to(get_all_courses))
             .route("/create", web::post().to(create_course))
-            .route("/top/{num}", web::get().to(get_top_courses)),
+            .route("/top/{num}", web::get().to(get_top_courses))
+            .route("/getreviews/{course_code}", web::get().to(get_reviews))
+            .route("/createreview", web::post().to(create_review))
     );
 }
