@@ -2,12 +2,12 @@ use crate::model::models::Course;
 use crate::repository::ddb::DDBRepository;
 use actix_web::{
     error::ResponseError,
+    Error,
     http::header::ContentType,
     web::Data,
     web::Json,
     web::Path,
     HttpResponse,
-
 };
 use derive_more::Display;
 use serde_json::{json, Error as SerdeJsonError};
@@ -46,11 +46,15 @@ impl From<SerdeJsonError> for CourseError {
 pub async fn get_course(
     ddb_repo: Data<DDBRepository>,
     course_code: Path<String>,
-) -> Result<Json<Course>, CourseError> {
-    let course = ddb_repo.get_course(course_code.into_inner()).await;
-    match course {
-        Some(course) => Ok(Json(course)),
-        None => Err(CourseError::CourseNotFound),
+) -> Result<Json<Course>, Error> { 
+    let result = ddb_repo.get_course(course_code.into_inner()).await;
+
+    match result {
+        Ok(Some(course)) => Ok(Json(course)), 
+        Ok(None) => Err(CourseError::CourseNotFound.into()),
+        Err(e) => {
+            Err(e.into())
+        },
     }
 }
 
@@ -91,6 +95,8 @@ pub async fn create_course(
         course_name: new_course.course_name.clone(),
         description: new_course.description.clone(),
         lecturer: new_course.lecturer.clone(),
+        average_difficulty: new_course.average_difficulty.clone(),
+        average_rating: new_course.average_rating.clone(),
         prerequisites: new_course.prerequisites.clone(),
     };
 

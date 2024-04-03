@@ -5,7 +5,6 @@ mod repository;
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use api::router::routes;
 use repository::ddb::DDBRepository;
-// We need Cors to allow it to be used on port 8000
 use actix_cors::Cors;
 
 #[actix_web::main]
