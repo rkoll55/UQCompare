@@ -1,4 +1,4 @@
-use crate::model::models::{Answer, Course, Question, Review};
+use crate::model::models::{Answer, Course, Question, Review, ReviewRequest};
 use aws_config::Config;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
@@ -6,6 +6,7 @@ use log::error;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct DDBRepository {
     client: Client,
@@ -56,7 +57,7 @@ fn required_item_value(
     match item_value(key, item) {
         Ok(Some(value)) => Ok(value),
         Ok(None) => Err(DDBError::General("required item value".to_string())),
-        Err(DDBError) => Err(DDBError),
+        Err(ddb_error) => Err(ddb_error),
     }
 }
 
@@ -74,7 +75,6 @@ fn item_value(
 }
 
 fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBError> {
-
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
     let course_name = required_item_value("name", item)?;
@@ -113,6 +113,9 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
             "Expected list for prerequisites".to_string(),
         )),
     }?;
+    let average_rating = parse_numeric_attribute("average_rating", item)?;
+    let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
+    let prerequisites_list = parse_list_attribute("prerequisites", item)?;
 
     Ok(Course {
         course_id,
@@ -120,27 +123,64 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
         course_name,
         description,
         lecturer,
+        average_rating,
+        average_difficulty,
         prerequisites: prerequisites_list,
         assesments: assesments,
     })
 }
 
+fn parse_numeric_attribute(key: &str, item: &HashMap<String, AttributeValue>,) -> Result<u8, DDBError> {
+    item.get(key)
+        .ok_or_else(|| DDBError::MissingAttribute(key.to_string()))
+        .and_then(|av| match av {
+            AttributeValue::N(number_str) => number_str.parse::<u8>().map_err(|_| DDBError::UnexpectedType(format!("Failed to parse {}", key))),
+            _ => Err(DDBError::UnexpectedType(format!("Expected number for {}", key))),
+        })
+}
+
+fn parse_list_attribute(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Vec<String>, DDBError> {
+    match item.get(key) {
+        Some(AttributeValue::L(list)) => list.iter().map(|av| match av {
+            AttributeValue::S(s) => Ok(s.clone()),
+            _ => Err(DDBError::UnexpectedType(format!("Expected string in {} list", key))),
+        }).collect(),
+        Some(_) => Err(DDBError::UnexpectedType(format!("Expected list for {}", key))),
+        None => Err(DDBError::MissingAttribute(key.to_string())),
+    }
+}
+
+fn parse_numeric_attribute(key: &str, item: &HashMap<String, AttributeValue>,) -> Result<u8, DDBError> {
+    item.get(key)
+        .ok_or_else(|| DDBError::MissingAttribute(key.to_string()))
+        .and_then(|av| match av {
+            AttributeValue::N(number_str) => number_str.parse::<u8>().map_err(|_| DDBError::UnexpectedType(format!("Failed to parse {}", key))),
+            _ => Err(DDBError::UnexpectedType(format!("Expected number for {}", key))),
+        })
+}
+
+fn parse_list_attribute(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Vec<String>, DDBError> {
+    match item.get(key) {
+        Some(AttributeValue::L(list)) => list.iter().map(|av| match av {
+            AttributeValue::S(s) => Ok(s.clone()),
+            _ => Err(DDBError::UnexpectedType(format!("Expected string in {} list", key))),
+        }).collect(),
+        Some(_) => Err(DDBError::UnexpectedType(format!("Expected list for {}", key))),
+        None => Err(DDBError::MissingAttribute(key.to_string())),
+    }
+}
+
 fn item_to_review(item: &HashMap<String, AttributeValue>) -> Result<Review, DDBError> {
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
-    let rating_str = required_item_value("rating", item)?;
-    let rating = rating_str
-        .parse::<u8>()
-        .map_err(|_| DDBError::General("Item to review".to_string()))?;
+    let rating = parse_numeric_attribute("rating", item)?;
     let text = required_item_value("text", item)?;
-    let date = required_item_value("date", item)?;
 
     Ok(Review {
         course_id,
         category,
         rating,
         text,
-        date,
     })
 }
 
@@ -156,6 +196,16 @@ fn item_to_question(item: &HashMap<String, AttributeValue>) -> Result<Question, 
         text,
         date,
     })
+}
+
+
+fn generate_unique_suffix() -> String {
+    let start = SystemTime::now();
+    let since_the_epoch = start
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards");
+    let timestamp_nanos = since_the_epoch.as_nanos().to_string();
+    timestamp_nanos
 }
 
 fn item_to_answer(item: &HashMap<String, AttributeValue>) -> Result<Answer, DDBError> {
@@ -211,10 +261,10 @@ impl DDBRepository {
         }
     }
 
-    pub async fn get_course(&self, course_id: String) -> Option<Course> {
+    pub async fn get_course(&self, course_id: String) -> Result<Option<Course>, Box<dyn std::error::Error>> {
         let course_id_av = AttributeValue::S(course_id);
         let category_info = AttributeValue::S(String::from("INFO"));
-
+    
         let res = self
             .client
             .query()
@@ -224,26 +274,25 @@ impl DDBRepository {
             .expression_attribute_values(":category", category_info)
             .send()
             .await;
-
-            error!("{:?}",res);
-        return match res {
+    
+        match res {
             Ok(output) => match output.items {
-                Some(items) => {
-                    let item = &items.first()?;
-                    match item_to_course(item) {
-                        Ok(task) => Some(task),
-                        Err(_) => None,
-                    }
+                Some(items) if !items.is_empty() => {
+                    let item = &items[0];
+                    item_to_course(item).map(Some).map_err(|e| {
+                        error!("Failed to convert item to course: {:?}", e);
+                        e.into() 
+                    })
                 }
-                None => None,
+                _ => Ok(None),
             },
-            Err(_) => {
-              //  error!("{:?}", error);
-                None
+            Err(error) => {
+                error!("DynamoDB query error: {:?}", error);
+                Err(error.into())
             }
-        };
+        }
     }
-
+    
     pub async fn get_all_courses(&self) -> Result<Vec<Course>, DDBError> {
         let category_info = AttributeValue::S(String::from("INFO"));
 
@@ -321,6 +370,63 @@ impl DDBRepository {
                 error!("{:?}", err);
                 Err(DDBError::General("Could not access DB".to_string()))
             }
+        }
+    }
+
+    pub async fn get_reviews(&self, course_id: String) -> Result<Vec<Review>, DDBError> {
+        let course_id_av = AttributeValue::S(course_id);
+        let review_prefix = AttributeValue::S(String::from("REVIEW#"));
+
+        let response = self
+            .client
+            .query()
+            .table_name(&self.table_name)
+            .key_condition_expression("course_id = :course_id AND begins_with(category, :review_prefix)")
+            .expression_attribute_values(":course_id", course_id_av)
+            .expression_attribute_values(":review_prefix", review_prefix)
+            .send()
+            .await;
+
+        let mut reviews = Vec::new();
+
+        match response {
+            Ok(response) => {
+                match response.items {
+                    Some(items) => {
+                        for item in items {
+                            match item_to_review(&item) {
+                                Ok(review) => reviews.push(review),
+                                Err(err) => {
+                                    error!("Failed to convert item to review: {:?}", err);
+                                    return Err(err);
+                                }
+                            }
+                        }
+                    }
+                    None => return Ok(reviews),
+                }
+                Ok(reviews)
+            }
+            Err(err) => {
+                error!("{:?}", err);
+                Err(DDBError::General("Could not access DB".to_string()))
+            }
+        }
+    }
+
+    pub async fn put_review(&self, review: ReviewRequest) -> Result<(), DDBError> {
+        let request = self
+            .client
+            .put_item()
+            .table_name(&self.table_name)
+            .item("course_id", AttributeValue::S(String::from(review.course_id)))
+            .item("category", AttributeValue::S(format!("REVIEW#{}", generate_unique_suffix())))
+            .item("rating", AttributeValue::N(review.rating.to_string()))
+            .item("text", AttributeValue::S(String::from(review.text)));
+
+        match request.send().await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DDBError::General("Put error".to_string())),
         }
     }
 }

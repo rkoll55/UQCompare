@@ -8,6 +8,8 @@ pub struct Course {
     pub course_name: String,
     pub description: String,
     pub lecturer: String,
+    pub average_rating: u8,
+    pub average_difficulty: u8,
     pub prerequisites: Vec<String>,
     pub assesments: Vec<Assesments>,
 }
@@ -40,7 +42,13 @@ pub struct Review {
     pub category: String,
     pub rating: u8,
     pub text: String,
-    pub date: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ReviewRequest {
+    pub course_id: String,
+    pub rating: u8,
+    pub text: String,
 }
 
 #[derive(Serialize, Deserialize)]
