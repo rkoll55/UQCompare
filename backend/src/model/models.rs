@@ -9,6 +9,7 @@ pub struct Course {
     pub description: String,
     pub lecturer: String,
     pub prerequisites: Vec<String>,
+    pub assesments: Vec<Assesments>,
 }
 
 impl fmt::Display for Course {
@@ -20,10 +21,17 @@ impl fmt::Display for Course {
              Course Name: {}\n\
              Description: {}\n\
              Lecturer: {}\n\
-             Prerequisites: {:?}",
-            self.course_id, self.category, self.course_name, self.description, self.lecturer, self.prerequisites
+             Prerequisites: {:?}\n\
+             Assesments: {:?}",
+            self.course_id, self.category, self.course_name, self.description, self.lecturer, self.prerequisites, self.assesments
         )
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Assesments {
+    name: String,
+    weight: u8,
 }
 
 #[derive(Serialize, Deserialize)]

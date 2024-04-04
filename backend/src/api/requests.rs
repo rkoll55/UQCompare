@@ -92,6 +92,7 @@ pub async fn create_course(
         description: new_course.description.clone(),
         lecturer: new_course.lecturer.clone(),
         prerequisites: new_course.prerequisites.clone(),
+        assesments: new_course.assesments.clone(),
     };
 
     match ddb_repo.put_course(course).await {

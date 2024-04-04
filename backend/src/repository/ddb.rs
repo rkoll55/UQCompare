@@ -81,11 +81,24 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let description = required_item_value("description", item)?;
     let lecturer = required_item_value("lecturer", item)?;
 
-    // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
-    let prerequisites_av = item
-        .get("prerequisites")
-        .ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
+    let assesments_av = item.get("assesments").ok_or_else(|| DDBError::MissingAttribute("assesments".to_string()))?;
+    let assesments = match assesments_av {
+        AttributeValue::L(list) => list
+            .iter()
+            .map(|av| match av {
+                AttributeValue::S(s) => Ok(s.clone()),
+                _ => Err(DDBError::UnexpectedType(
+                    "Expected string in prerequisites list".to_string(),
+                )),
+            })
+            .collect::<Result<Vec<String>, DDBError>>(),
+        _ => Err(DDBError::UnexpectedType(
+            "Expected list for prerequisites".to_string(),
+        )),
+    }?
 
+    // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
+    let prerequisites_av = item.get("prerequisites").ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
     let prerequisites_list = match prerequisites_av {
         AttributeValue::L(list) => list
             .iter()
@@ -108,6 +121,7 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
         description,
         lecturer,
         prerequisites: prerequisites_list,
+        assesments: assesments,
     })
 }
 
@@ -223,7 +237,7 @@ impl DDBRepository {
                 }
                 None => None,
             },
-            Err(error) => {
+            Err(_) => {
               //  error!("{:?}", error);
                 None
             }
@@ -289,7 +303,7 @@ impl DDBRepository {
                         for item in items {
                             match item_to_course(&item) {
                                 Ok(task) => {
-                                    if (count >= num_courses) {
+                                    if count >= num_courses {
                                         break;
                                     }
                                     courses.push(task);
