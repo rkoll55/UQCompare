@@ -8,7 +8,7 @@ import Review from "../components/Review";
 function CoursePage() {
   const params = useParams();
   const courseId =
-    "http://127.0.0.1:8000/api/get/" + params.courseId.toUpperCase();
+    "http://127.0.0.1:8000/api/get/" + params.courseId;
   const [courseInfo, setCourseInfo] = useState();
 
   const fetchData = async () => {
@@ -29,7 +29,6 @@ function CoursePage() {
     fetchData();
   }, []);
 
-  console.log(courseInfo);
   return (
     <section className={Styles.ecpSummary}>
       {courseInfo ? (

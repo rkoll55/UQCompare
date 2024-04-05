@@ -43,12 +43,11 @@
   border: none;
   border-radius: 1px;
 }
-
 .square {
-  position: fixed;
+  position: absolute;
   z-index: -1;
   left: 55rem;
-  height: 92vh;
+  height: 140vh;
   width: 30rem;
   background: linear-gradient(to right, #44619e, #832887);
 }

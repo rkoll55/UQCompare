@@ -70,9 +70,8 @@
   display: grid;
   grid-template-areas:
     "header header header header"
-    "description description lecturer lecturer"
-    "secat assesment prereq prereq";
-  grid-template-columns: 2fr 2fr 1fr 1fr;
+    "description lecturer assesment prereq";
+  grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
 .ecpDetails h1 {

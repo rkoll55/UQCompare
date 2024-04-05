@@ -5,10 +5,17 @@ function ECPSummary({ courseDetails }) {
     fontSize: "1.5rem",
   };
 
+  console.log(courseDetails)
+  const assessmentList = courseDetails.assesments ? courseDetails.assesments.map(assesment => (
+    <li key={assesment.name}>{assesment.name}: {assesment.weight}%</li>
+  )): <p>None</p> ;
+
+
+
   return (
     <div className={Styles.ecpDetails}>
       <div style={{ gridArea: "header" }}>
-        <h1>{courseDetails.course_id}</h1>
+        <h1>{courseDetails.course_id.toUpperCase()}</h1>
         <h2 className={Styles.ecpTitle}>{courseDetails.course_name}</h2>
       </div>
       <div style={{ gridArea: "description" }}>
@@ -27,14 +34,12 @@ function ECPSummary({ courseDetails }) {
             : "None"}
         </p>
       </div>
-      <dev style={{ gridArea: "assesment", textAlign: "center" }}>
+      <div style={{ gridArea: "assesment", textAlign: "center" }}>
         <h3 style={title}>Assesments</h3>
-        <p>Coming Soon!</p>
-      </dev>
-      <dev style={{ gridArea: "secat" }}>
-        <h3 style={title}>Secat</h3>
-        <p>Coming Soon!</p>
-      </dev>
+        <ul style={{listStyleType: "none"}}>
+        {assessmentList}
+        </ul>
+      </div>
     </div>
   );
 }
