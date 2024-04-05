@@ -1,4 +1,4 @@
-use crate::model::models::{Answer, Course, Question, Review, ReviewRequest};
+use crate::model::models::{Answer, Course, Question, Review, ReviewRequest, Assesments};
 use aws_config::Config;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
@@ -81,21 +81,38 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let description = required_item_value("description", item)?;
     let lecturer = required_item_value("lecturer", item)?;
 
-    let assesments_av = item.get("assesments").ok_or_else(|| DDBError::MissingAttribute("assesments".to_string()))?;
+
+    let assesments_av = item.get("assesments")
+    .ok_or_else(|| DDBError::MissingAttribute("assesments".to_string()))?;
+
     let assesments = match assesments_av {
-        AttributeValue::L(list) => list
-            .iter()
-            .map(|av| match av {
-                AttributeValue::S(s) => Ok(s.clone()),
-                _ => Err(DDBError::UnexpectedType(
-                    "Expected string in prerequisites list".to_string(),
-                )),
-            })
-            .collect::<Result<Vec<String>, DDBError>>(),
-        _ => Err(DDBError::UnexpectedType(
-            "Expected list for prerequisites".to_string(),
-        )),
-    }?
+        AttributeValue::M(map) => {
+            let mut assesments_vec = Vec::new();
+
+            for(key, value) in map.iter() {
+                let number = match value {
+                    AttributeValue::N(n) => n.parse::<u64>().map_err(|_| {
+                        DDBError::UnexpectedType(
+                            "Expected number for assessment value".to_string(),
+                        )
+                    })?,
+                    _ => {
+                        return Err(DDBError::UnexpectedType(
+                            "Expected number for assessment value".to_string(),
+                        ))
+                    }
+                };
+                assesments_vec.push(Assesments{name: key.clone(), weight: number});
+            }
+
+            assesments_vec
+        }
+        _ => {
+            return Err(DDBError::UnexpectedType(
+                "Expected map for assessments".to_string(),
+            ))
+        }
+    };
 
     // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
     let prerequisites_av = item.get("prerequisites").ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
@@ -116,6 +133,7 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let average_rating = parse_numeric_attribute("average_rating", item)?;
     let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
     let prerequisites_list = parse_list_attribute("prerequisites", item)?;
+
 
     Ok(Course {
         course_id,
@@ -139,25 +157,6 @@ fn parse_numeric_attribute(key: &str, item: &HashMap<String, AttributeValue>,) -
         })
 }
 
-fn parse_list_attribute(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Vec<String>, DDBError> {
-    match item.get(key) {
-        Some(AttributeValue::L(list)) => list.iter().map(|av| match av {
-            AttributeValue::S(s) => Ok(s.clone()),
-            _ => Err(DDBError::UnexpectedType(format!("Expected string in {} list", key))),
-        }).collect(),
-        Some(_) => Err(DDBError::UnexpectedType(format!("Expected list for {}", key))),
-        None => Err(DDBError::MissingAttribute(key.to_string())),
-    }
-}
-
-fn parse_numeric_attribute(key: &str, item: &HashMap<String, AttributeValue>,) -> Result<u8, DDBError> {
-    item.get(key)
-        .ok_or_else(|| DDBError::MissingAttribute(key.to_string()))
-        .and_then(|av| match av {
-            AttributeValue::N(number_str) => number_str.parse::<u8>().map_err(|_| DDBError::UnexpectedType(format!("Failed to parse {}", key))),
-            _ => Err(DDBError::UnexpectedType(format!("Expected number for {}", key))),
-        })
-}
 
 fn parse_list_attribute(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Vec<String>, DDBError> {
     match item.get(key) {
@@ -311,6 +310,7 @@ impl DDBRepository {
             Ok(response) => {
                 match response.items {
                     Some(items) => {
+
                         for item in items {
                             match item_to_course(&item) {
                                 Ok(task) => courses.push(task),
@@ -320,6 +320,7 @@ impl DDBRepository {
                     }
                     None => return Ok(courses),
                 }
+
                 Ok(courses)
             }
             Err(err) => {

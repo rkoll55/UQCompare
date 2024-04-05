@@ -32,8 +32,8 @@ impl fmt::Display for Course {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Assesments {
-    name: String,
-    weight: u8,
+    pub name: String,
+    pub weight: u64,
 }
 
 #[derive(Serialize, Deserialize)]
