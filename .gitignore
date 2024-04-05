@@ -28,3 +28,4 @@ dist-ssr
 backend/target/
 *.rlib
 *.rmeta
+/backend/environment.sh
