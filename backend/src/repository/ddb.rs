@@ -1,5 +1,4 @@
 use crate::model::models::{Answer, Course, Question, Review, ReviewRequest, Assesments};
-use crate::model::models::{Answer, Course, Question, Review, ReviewRequest};
 use aws_config::Config;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
@@ -116,25 +115,6 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     };
 
     // Handle prerequisites as a list (assuming it's stored as a List in DynamoDB)
-    let prerequisites_av = item.get("prerequisites").ok_or_else(|| DDBError::MissingAttribute("prerequisites".to_string()))?;
-    let prerequisites_list = match prerequisites_av {
-        AttributeValue::L(list) => list
-            .iter()
-            .map(|av| match av {
-                AttributeValue::S(s) => Ok(s.clone()),
-                _ => Err(DDBError::UnexpectedType(
-                    "Expected string in prerequisites list".to_string(),
-                )),
-            })
-            .collect::<Result<Vec<String>, DDBError>>(),
-        _ => Err(DDBError::UnexpectedType(
-            "Expected list for prerequisites".to_string(),
-        )),
-    }?;
-    let average_rating = parse_numeric_attribute("average_rating", item)?;
-    let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
-    let prerequisites_list = parse_list_attribute("prerequisites", item)?;
-
     let average_rating = parse_numeric_attribute("average_rating", item)?;
     let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
     let prerequisites_list = parse_list_attribute("prerequisites", item)?;
