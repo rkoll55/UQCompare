@@ -1,4 +1,5 @@
 use crate::model::models::{Answer, Course, Question, Review, ReviewRequest, Assesments};
+use crate::model::models::{Answer, Course, Question, Review, ReviewRequest};
 use aws_config::Config;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::Client;
@@ -134,6 +135,9 @@ fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, DDBE
     let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
     let prerequisites_list = parse_list_attribute("prerequisites", item)?;
 
+    let average_rating = parse_numeric_attribute("average_rating", item)?;
+    let average_difficulty = parse_numeric_attribute("average_difficulty", item)?;
+    let prerequisites_list = parse_list_attribute("prerequisites", item)?;
 
     Ok(Course {
         course_id,
@@ -156,7 +160,6 @@ fn parse_numeric_attribute(key: &str, item: &HashMap<String, AttributeValue>,) -
             _ => Err(DDBError::UnexpectedType(format!("Expected number for {}", key))),
         })
 }
-
 
 fn parse_list_attribute(key: &str, item: &HashMap<String, AttributeValue>) -> Result<Vec<String>, DDBError> {
     match item.get(key) {
