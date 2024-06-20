@@ -54,11 +54,10 @@ fn required_item_value(
     key: &str,
     item: &HashMap<String, AttributeValue>,
 ) -> Result<String, DDBError> {
-    match item_value(key, item) {
-        Ok(Some(value)) => Ok(value),
-        Ok(None) => Err(DDBError::General("required item value".to_string())),
-        Err(ddb_error) => Err(ddb_error),
-    }
+    item_value(key, item)
+    .and_then(|maybe_value| maybe_value.ok_or_else(|| {
+        DDBError::General("required item value".to_string())
+    }))
 }
 
 fn item_value(
@@ -205,6 +204,7 @@ fn item_to_answer(item: &HashMap<String, AttributeValue>) -> Result<Answer, DDBE
 }
 
 impl DDBRepository {
+
     pub fn init(table_name: String, config: Config) -> DDBRepository {
         let client = Client::new(&config);
         DDBRepository { table_name, client }
@@ -287,30 +287,18 @@ impl DDBRepository {
             .send()
             .await;
 
-        let mut courses = Vec::new();
-
-        match response {
-            Ok(response) => {
-                match response.items {
-                    Some(items) => {
-
-                        for item in items {
-                            match item_to_course(&item) {
-                                Ok(task) => courses.push(task),
-                                Err(_) => break,
-                            }
-                        }
-                    }
-                    None => return Ok(courses),
-                }
-
-                Ok(courses)
-            }
-            Err(err) => {
-                error!("{:?}", err);
-                Err(DDBError::General("Could not access DB".to_string()))
-            }
-        }
+        response
+            .map(|response| {
+                response.items.map_or(Ok(Vec::new()), |items| {
+                    items.iter()
+                        .map(item_to_course)
+                        .collect::<Result<Vec<_>, _>>()
+                })
+        })
+        .unwrap_or_else(|err| {
+            error!("{:?}", err);
+            Err(DDBError::General("Could not access DB".to_string()))
+        })
     }
 
     pub async fn get_top_courses(&self, num_courses: i32) -> Result<Vec<Course>, DDBError> {
