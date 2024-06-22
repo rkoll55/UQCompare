@@ -46,14 +46,14 @@ impl From<SerdeJsonError> for CourseError {
 pub async fn get_course(
     ddb_repo: Data<DDBRepository>,
     course_code: Path<String>,
-) -> Result<Json<Course>, Error> { 
+) -> Result<Json<Course>, CourseError> { 
     let result = ddb_repo.get_course(course_code.into_inner()).await;
 
     match result {
         Ok(Some(course)) => Ok(Json(course)), 
         Ok(None) => Err(CourseError::CourseNotFound.into()),
         Err(e) => {
-            Err(e.into())
+            Err(CourseError::CourseNotFound)
         },
     }
 }
