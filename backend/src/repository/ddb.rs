@@ -1,5 +1,5 @@
 pub use crate::repository::ddb_attributes::*;
-use crate::model::models::{Answer, Course, Question, Review, ReviewRequest, Assesments};
+use crate::model::models::{Answer, AnswerRequest, Assesments, Course, Question, QuestionRequest, Review, ReviewRequest};
 use aws_config::Config;
 use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_dynamodb::types::SdkError;
@@ -164,5 +164,71 @@ impl DDBRepository {
         }
     }
 
+    pub async fn get_questions(&self, course_id: String) -> Result<Vec<Question>, DDBError> {
+        let course_id_av = AttributeValue::S(course_id);
+        let question_prefix = AttributeValue::S(String::from("REVIEW#"));
 
+        let response = self
+        .client
+        .query()
+        .table_name(&self.table_name)
+        .key_condition_expression("course_id = :course_id AND begins_with(category, :question_prefix)")
+        .expression_attribute_values(":course_id", course_id_av)
+        .expression_attribute_values(":question_prefix", question_prefix)
+        .send()
+        .await;
+
+        map_db_query_response(response, item_to_question)
+    }
+    
+    pub async fn put_question(&self, question: QuestionRequest) -> Result<(), DDBError> {
+        let request = self
+            .client
+            .put_item()
+            .table_name(&self.table_name)
+            .item("course_id", AttributeValue::S(String::from(question.course_id)))
+            .item("category", AttributeValue::S(format!("QUESTION#{}", generate_unique_suffix())))
+            .item("text", AttributeValue::S(String::from(question.text)))
+            .item("date", AttributeValue::S(question.date));
+
+        match request.send().await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DDBError::General("Put error".to_string())),
+        }
+    }
+
+    pub async fn get_answers(&self, course_id: String, question_id: String) -> Result<Vec<Answer>, DDBError> {
+        let course_id_av = AttributeValue::S(course_id);
+        let answer_prefix = AttributeValue::S(format!("ANSWER#QA#{}", question_id));
+
+        let response = self
+        .client
+        .query()
+        .table_name(&self.table_name)
+        .key_condition_expression("course_id = :course_id AND begins_with(category, :answer_prefix)")
+        .expression_attribute_values(":course_id", course_id_av)
+        .expression_attribute_values(":question_prefix", answer_prefix)
+        .send()
+        .await;
+
+        map_db_query_response(response, item_to_answer)
+    }
+    
+    pub async fn put_answer(&self, answer: AnswerRequest) -> Result<(), DDBError> {
+        
+        answer.question_id.split("#").nth(1).ok_or(DDBError::UnexpectedType("Invalid Question Id".to_string()))?;
+        let request = self
+            .client
+            .put_item()
+            .table_name(&self.table_name)
+            .item("course_id", AttributeValue::S(String::from(answer.course_id)))
+            .item("category", AttributeValue::S(format!("ANSWER#QA#{}#{}", answer.question_id.split("#").nth(1).unwrap(),generate_unique_suffix())))
+            .item("text", AttributeValue::S(String::from(answer.text)))
+            .item("date", AttributeValue::S(answer.date));
+
+        match request.send().await {
+            Ok(_) => Ok(()),
+            Err(_) => Err(DDBError::General("Put error".to_string())),
+        }
+    }
 }

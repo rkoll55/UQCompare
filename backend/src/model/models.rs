@@ -60,9 +60,25 @@ pub struct Question {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct QuestionRequest {
+    pub course_id: String,
+    pub text: String,
+    pub date: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct Answer {
     pub course_id: String,
     pub category: String,
+    pub question_id: String,
+    pub text: String,
+    pub date: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct AnswerRequest {
+    pub course_id: String,
+    pub question_id: String,
     pub text: String,
     pub date: String,
 }

@@ -41,8 +41,7 @@ pub fn item_to_course(item: &HashMap<String, AttributeValue>) -> Result<Course, 
                     })?,
                     _ => {
                         return Err(DDBError::UnexpectedType(
-                            "Expected number for assessment value".to_string(),
-                        ))
+                            "Expected number for assessment value".to_string()))
                     }
                 };
                 assesments_vec.push(Assesments{name: key.clone(), weight: number});
@@ -114,8 +113,9 @@ pub fn item_to_question(item: &HashMap<String, AttributeValue>) -> Result<Questi
 pub fn item_to_answer(item: &HashMap<String, AttributeValue>) -> Result<Answer, DDBError> {
     let course_id = required_item_value("course_id", item)?;
     let category = required_item_value("category", item)?;
+    let question_id = format!("QUESTION#{}", category.split('#').nth(2).unwrap_or(""));
     let text = required_item_value("text", item)?;
     let date = required_item_value("date", item)?;
 
-    Ok(Answer { course_id, category, text, date,})
+    Ok(Answer { course_id, category, question_id, text, date,})
 }
