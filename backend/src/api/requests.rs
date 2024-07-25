@@ -1,4 +1,4 @@
-use crate::model::models::{Course, Question, QuestionRequest, Review, ReviewRequest};
+use crate::model::models::{Course, Question, QuestionRequest, Answer, AnswerRequest, Review, ReviewRequest};
 use crate::repository::ddb::DDBRepository;
 use actix_web::{
     error::ResponseError,
@@ -160,7 +160,37 @@ pub async fn create_question(
     };
 
     match ddb_repo.put_question(question).await {
-        Ok(_) => Ok(HttpResponse::Ok().body("Review added successfully.")),
-        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to add review.")),
+        Ok(_) => Ok(HttpResponse::Ok().body("Question added successfully.")),
+        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to add question.")),
+    }
+}
+
+pub async fn get_answers(
+    ddb_repo: Data<DDBRepository>,
+    path: Path<(String, String)>,
+) -> Result<Json<Vec<Answer>>, CourseError> {
+    let (course_id, question_id) = path.into_inner();
+    let result = ddb_repo.get_answers(course_id, question_id).await;
+
+    match result {
+        Ok(answers) => Ok(Json(answers)),
+        Err(_) => Err(CourseError::CourseNotFound),
+    }
+}
+
+pub async fn create_answer(
+    ddb_repo: Data<DDBRepository>,
+    new_answer: Json<AnswerRequest>,
+) -> Result<HttpResponse, CourseError> {
+    let answer = AnswerRequest {
+        course_id: new_answer.course_id.clone(),
+        question_id: new_answer.question_id.clone(),
+        text: new_answer.text.clone(),
+        date: new_answer.date.clone(),
+    };
+
+    match ddb_repo.put_answer(answer).await {
+        Ok(_) => Ok(HttpResponse::Ok().body("Answer added successfully.")),
+        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to add answer.")),
     }
 }

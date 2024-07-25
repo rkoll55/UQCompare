@@ -207,7 +207,7 @@ impl DDBRepository {
         .table_name(&self.table_name)
         .key_condition_expression("course_id = :course_id AND begins_with(category, :answer_prefix)")
         .expression_attribute_values(":course_id", course_id_av)
-        .expression_attribute_values(":question_prefix", answer_prefix)
+        .expression_attribute_values(":answer_prefix", answer_prefix)
         .send()
         .await;
 
