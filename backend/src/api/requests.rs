@@ -1,4 +1,4 @@
-use crate::model::models::{Course, Review, ReviewRequest};
+use crate::model::models::{Course, Question, QuestionRequest, Review, ReviewRequest};
 use crate::repository::ddb::DDBRepository;
 use actix_web::{
     error::ResponseError,
@@ -131,6 +131,35 @@ pub async fn create_review(
     };
 
     match ddb_repo.put_review(review).await {
+        Ok(_) => Ok(HttpResponse::Ok().body("Review added successfully.")),
+        Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to add review.")),
+    }
+}
+
+pub async fn get_questions(
+    ddb_repo: Data<DDBRepository>,
+    course_code: Path<String>,
+) -> Result<Json<Vec<Question>>, CourseError> {
+    let result = ddb_repo.get_questions(course_code.into_inner()).await;
+
+    match result {
+        Ok(questions) => Ok(Json(questions)),
+        Err(_) => Err(CourseError::CourseNotFound),
+    }
+}
+
+pub async fn create_question(
+    ddb_repo: Data<DDBRepository>,
+    new_question: Json<QuestionRequest>,
+
+) -> Result<HttpResponse, CourseError> {
+    let question = QuestionRequest {
+        course_id: new_question.course_id.clone(),
+        text: new_question.text.clone(),
+        date: new_question.date.clone(),
+    };
+
+    match ddb_repo.put_question(question).await {
         Ok(_) => Ok(HttpResponse::Ok().body("Review added successfully.")),
         Err(_) => Ok(HttpResponse::InternalServerError().body("Failed to add review.")),
     }
