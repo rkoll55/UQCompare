@@ -35,7 +35,7 @@ function CoursePage() {
         <>
           <ECPSummary courseDetails={courseInfo} />
           <QnA />
-          <Review />
+          <Review courseId={params.courseId} />
         </>
       ) : (
         <h1 style={{ textAlign: "center" }}>Loading...</h1>
