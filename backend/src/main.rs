@@ -22,7 +22,7 @@ async fn main() -> std::io::Result<()> {
         let logger = Logger::default();
 
         let cors = Cors::default()
-            .allowed_origin("http://localhost:5173")
+            .allowed_origin("http://localhost")
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
             .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
             .allowed_header(http::header::CONTENT_TYPE)
@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(ddb_data.clone())
             .configure(routes)
     })
-    .bind(("127.0.0.1", 8000))?
+    .bind(("0.0.0.0", 8000))?
     .run()
     .await
 }
