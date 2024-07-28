@@ -14,12 +14,11 @@ function QnA({ courseId }) {
 
   const fetchQuestions = async () => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/getquestions/${courseId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/getquestions/${courseId}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("Fetched questions:", data);
       setQuestions(data);
 
       // Fetch answers for each question
@@ -34,12 +33,11 @@ function QnA({ courseId }) {
 
   const fetchAnswers = async (courseId, questionId) => {
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/getanswers/${courseId}/${questionId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/getanswers/${courseId}/${questionId}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log(`Fetched answers for question ${questionId}:`, data);
       setAnswers((prevAnswers) => ({ ...prevAnswers, [questionId]: data }));
     } catch (error) {
       console.error("Error fetching answers:", error);
@@ -55,7 +53,7 @@ function QnA({ courseId }) {
   };
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/api/createquestion", {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/createquestion`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -64,7 +62,6 @@ function QnA({ courseId }) {
     });
 
     const responseText = await response.text();
-    console.log("Raw response:", responseText);
 
     if (response.ok) {
       setMessage("Question added successfully.");
@@ -90,7 +87,7 @@ function QnA({ courseId }) {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/createanswer", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/createanswer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

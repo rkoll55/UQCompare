@@ -8,7 +8,7 @@ function Review({courseId}) {
   const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/getreviews/" + courseId) // Replace COURSE_CODE with the actual course code or make it dynamic
+    fetch(`${import.meta.env.VITE_API_URL}/api/getreviews/${courseId}`)
       .then((response) => response.json())
       .then((data) => setReviews(data))
       .catch((error) => console.error("Error fetching reviews:", error));
@@ -24,7 +24,7 @@ function Review({courseId}) {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/createreview", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/createreview`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -36,7 +36,7 @@ function Review({courseId}) {
         setMessage("Review added successfully.");
         setRating(0);
         setText("");
-        fetch("http://127.0.0.1:8000/reviews/COURSE_CODE")
+        fetch(`${import.meta.env.VITE_API_URL}/api/getreviews/${courseId}`)
           .then((response) => response.json())
           .then((data) => setReviews(data))
           .catch((error) => console.error("Error fetching reviews:", error));

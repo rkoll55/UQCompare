@@ -84,7 +84,7 @@ const SearchModal = ({ isOpen, closeModal }) => {
   }, [closeModal]);
 
   const handleResultClick = (courseId) => {
-    navigate(`/courses/${courseId}`);
+    navigate(`/courses/${courseId.toLowerCase()}`);
     closeModal();
   };
 
