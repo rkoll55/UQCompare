@@ -5,7 +5,6 @@ function ECPSummary({ courseDetails }) {
     fontSize: "1.5rem",
   };
 
-  console.log(courseDetails)
   const assessmentList = courseDetails.assesments ? courseDetails.assesments.map(assesment => (
     <li key={assesment.name}>{assesment.name}: {assesment.weight}%</li>
   )): <p>None</p> ;

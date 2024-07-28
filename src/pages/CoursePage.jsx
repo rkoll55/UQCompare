@@ -34,7 +34,7 @@ function CoursePage() {
       {courseInfo ? (
         <>
           <ECPSummary courseDetails={courseInfo} />
-          <QnA />
+          <QnA courseId={params.courseId}/>
           <Review courseId={params.courseId} />
         </>
       ) : (

@@ -2,7 +2,6 @@ use crate::model::models::{Course, Question, QuestionRequest, Answer, AnswerRequ
 use crate::repository::ddb::DDBRepository;
 use actix_web::{
     error::ResponseError,
-    Error,
     http::header::ContentType,
     web::Data,
     web::Json,

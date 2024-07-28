@@ -166,7 +166,7 @@ impl DDBRepository {
 
     pub async fn get_questions(&self, course_id: String) -> Result<Vec<Question>, DDBError> {
         let course_id_av = AttributeValue::S(course_id);
-        let question_prefix = AttributeValue::S(String::from("REVIEW#"));
+        let question_prefix = AttributeValue::S(String::from("QUESTION#"));
 
         let response = self
         .client
@@ -216,13 +216,12 @@ impl DDBRepository {
     
     pub async fn put_answer(&self, answer: AnswerRequest) -> Result<(), DDBError> {
         
-        answer.question_id.split("#").nth(1).ok_or(DDBError::UnexpectedType("Invalid Question Id".to_string()))?;
         let request = self
             .client
             .put_item()
             .table_name(&self.table_name)
             .item("course_id", AttributeValue::S(String::from(answer.course_id)))
-            .item("category", AttributeValue::S(format!("ANSWER#QA#{}#{}", answer.question_id.split("#").nth(1).unwrap(),generate_unique_suffix())))
+            .item("category", AttributeValue::S(format!("ANSWER#QA#{}#{}", answer.question_id, generate_unique_suffix())))
             .item("text", AttributeValue::S(String::from(answer.text)))
             .item("date", AttributeValue::S(answer.date));
 
