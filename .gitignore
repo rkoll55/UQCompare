@@ -29,3 +29,4 @@ backend/target/
 *.rlib
 *.rmeta
 /backend/environment.sh
+.env

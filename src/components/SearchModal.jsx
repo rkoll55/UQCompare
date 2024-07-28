@@ -1,6 +1,8 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useContext } from "react";
 import ReactDOM from "react-dom";
+import { useNavigate } from "react-router-dom";
 import Search from "./Search";
+import { SearchContext } from "../SearchContext";
 
 const styles = {
   overlay: {
@@ -19,8 +21,8 @@ const styles = {
     width: "64%",
     height: "80vh",
     display: "flex",
-    flexDirection: "colum",
-    justtifyContent: "center",
+    flexDirection: "column",
+    justifyContent: "center",
     borderRadius: "2rem",
     zIndex: 2,
     border: "4px solid #44619e",
@@ -29,18 +31,36 @@ const styles = {
   search: {
     width: "85%",
   },
+
+  results: {
+    marginTop: "1rem",
+    width: "100%",
+    maxHeight: "60vh",
+    overflowY: "auto",
+    backgroundColor: "#fff",
+    borderRadius: "1rem",
+    padding: "1rem",
+  },
+
+  resultItem: {
+    padding: "0.5rem",
+    borderBottom: "1px solid #ddd",
+    cursor: "pointer",
+  },
 };
 
 const SearchModal = ({ isOpen, closeModal }) => {
   const modalRef = useRef(null);
   const searchRef = useRef(null);
+  const { filteredCourses } = useContext(SearchContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
-       searchRef.current.focus();
+      searchRef.current.focus();
     }
-   }, [isOpen]);
-   
+  }, [isOpen]);
+
   useEffect(() => {
     const handleOutsideClick = (event) => {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -63,6 +83,11 @@ const SearchModal = ({ isOpen, closeModal }) => {
     };
   }, [closeModal]);
 
+  const handleResultClick = (courseId) => {
+    navigate(`/courses/${courseId}`);
+    closeModal();
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -71,6 +96,17 @@ const SearchModal = ({ isOpen, closeModal }) => {
     <div style={styles.overlay}>
       <dialog open className="modal" ref={modalRef} style={styles.dialog}>
         <Search style={styles.search} ref={searchRef} />
+        <div style={styles.results}>
+          {filteredCourses.map((course, index) => (
+            <div
+              key={index}
+              style={styles.resultItem}
+              onClick={() => handleResultClick(course.course_id)}
+            >
+              {course.course_id}
+            </div>
+          ))}
+        </div>
       </dialog>
     </div>,
     document.getElementById("root")

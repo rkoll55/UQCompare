@@ -2,6 +2,7 @@ import styles from "./styles/header.module.css";
 import { useContext } from "react";
 import { SearchContext } from "../SearchContext";
 import { Link } from "react-router-dom";
+import SearchModal from "./SearchModal.jsx";
 
 export default function Header() {
   const { search, setSearch } = useContext(SearchContext);
@@ -12,6 +13,7 @@ export default function Header() {
 
   return (
     <header className={styles.header}>
+      <SearchModal isOpen={Boolean(search)} closeModal={() => setSearch("")} />
       <Link
         to="/"
         className={styles.mainHeaderContainer}

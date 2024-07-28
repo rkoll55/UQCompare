@@ -1,15 +1,21 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useContext, useState } from "react";
 import Styles from "./styles/courses.module.css";
-import { useContext } from "react";
 import { SearchContext } from "../SearchContext";
 
 const Search = forwardRef((props, ref) => {
-  const { search, setSearch } = useContext(SearchContext);
+  const { search, setSearch, handleSearch } = useContext(SearchContext);
+  const [query, setQuery] = useState("");
 
   const handleSetSearch = () => {
     if (!search) {
-      setSearch(!search);
+      setSearch(true);
     }
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+    handleSearch(value);
   };
 
   return (
@@ -17,7 +23,9 @@ const Search = forwardRef((props, ref) => {
       ref={ref}
       type="text"
       placeholder="Search for a Course..."
+      value={query}
       onClick={handleSetSearch}
+      onChange={handleChange}
       className={Styles.search}
       {...props}
     />
